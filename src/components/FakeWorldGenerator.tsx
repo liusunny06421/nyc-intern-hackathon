@@ -29,13 +29,26 @@ interface Props {
 }
 
 export default function FakeWorldGenerator({ roomNumber, dimensions, floorPlanUrl, photos = [] }: Props) {
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [phase, setPhase] = useState<Phase>("done");
   const [preview, setPreview] = useState<string | null>(null);
   const [stepIdx, setStepIdx] = useState(0);
   const [pct, setPct] = useState(0);
+  const [meshUrl, setMeshUrl] = useState<string | null>(null);
+  const [sceneUrl, setSceneUrl] = useState<string | null>(null);
+  const [genError, setGenError] = useState<string | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tickTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const elapsed = useRef(0);
 
   const baked = isWorldBaked();
+
+  const clearGenerationTimers = useCallback(() => {
+    if (pollTimer.current) clearInterval(pollTimer.current);
+    if (tickTimer.current) clearInterval(tickTimer.current);
+    pollTimer.current = null;
+    tickTimer.current = null;
+  }, []);
 
   const runIllusion = useCallback(() => {
     setPhase("working");
@@ -58,11 +71,89 @@ export default function FakeWorldGenerator({ roomNumber, dimensions, floorPlanUr
     });
   }, []);
 
+  // Maps elapsed seconds of real polling onto the cosmetic STEPS timeline.
+  const stepForElapsed = (sec: number) => {
+    if (sec < 15) return 0;
+    if (sec < 30) return 1;
+    if (sec < 60) return 2;
+    return 3;
+  };
+
+  const pollGeneration = useCallback((operationId: string) => {
+    elapsed.current = 0;
+    setStepIdx(0);
+    setPct(STEPS[0].pct);
+
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`/api/generate/status?operationId=${encodeURIComponent(operationId)}`);
+        const data = await res.json();
+        if (data.status === "done") {
+          clearGenerationTimers();
+          setStepIdx(STEPS.length - 1);
+          setPct(100);
+          setMeshUrl(data.meshUrl ?? null);
+          setSceneUrl(data.sceneUrl ?? null);
+          timers.current.push(setTimeout(() => setPhase("done"), 700));
+        } else if (data.status === "failed") {
+          clearGenerationTimers();
+          setGenError(data.error || "Generation failed.");
+          timers.current.push(
+            setTimeout(() => {
+              setGenError(null);
+              setPhase("idle");
+            }, 4000)
+          );
+        }
+        // "pending" / "processing" — keep polling, ticker drives the UI.
+      } catch {
+        // transient network hiccup — keep polling on the next tick
+      }
+    };
+
+    tickTimer.current = setInterval(() => {
+      elapsed.current += 1;
+      const idx = stepForElapsed(elapsed.current);
+      setStepIdx(idx);
+      setPct(STEPS[idx].pct);
+    }, 1000);
+
+    pollTimer.current = setInterval(checkStatus, 8000);
+    checkStatus();
+  }, [clearGenerationTimers]);
+
+  const startGeneration = useCallback(async (file: File) => {
+    setPhase("working");
+    setStepIdx(0);
+    setPct(0);
+    setMeshUrl(null);
+    setSceneUrl(null);
+    setGenError(null);
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+    clearGenerationTimers();
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/generate", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok || !data.operationId) {
+        // No API key configured, or the upstream call failed — fall back to the demo illusion.
+        runIllusion();
+        return;
+      }
+      pollGeneration(data.operationId);
+    } catch {
+      runIllusion();
+    }
+  }, [clearGenerationTimers, pollGeneration, runIllusion]);
+
   const onDrop = useCallback((files: File[]) => {
     if (!files[0]) return;
     setPreview(URL.createObjectURL(files[0]));
-    runIllusion();
-  }, [runIllusion]);
+    startGeneration(files[0]);
+  }, [startGeneration]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -71,11 +162,20 @@ export default function FakeWorldGenerator({ roomNumber, dimensions, floorPlanUr
     disabled: phase === "working",
   });
 
-  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  useEffect(() => () => {
+    timers.current.forEach(clearTimeout);
+    clearGenerationTimers();
+  }, [clearGenerationTimers]);
 
   const reset = () => {
     if (preview) URL.revokeObjectURL(preview);
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+    clearGenerationTimers();
     setPreview(null);
+    setMeshUrl(null);
+    setSceneUrl(null);
+    setGenError(null);
     setPhase("idle");
   };
 
@@ -136,14 +236,17 @@ export default function FakeWorldGenerator({ roomNumber, dimensions, floorPlanUr
                     style={{ width: `${pct}%`, background: "var(--color-rose)" }} />
                 </div>
                 <p className="text-xs font-mono text-muted-foreground">{pct}%</p>
+                {genError && (
+                  <p className="text-xs font-mono text-destructive max-w-xs text-center px-4">{genError}</p>
+                )}
               </div>
             </>
           )}
 
-          {/* DONE — reveal the pre-baked world */}
+          {/* DONE — reveal the generated world (or the pre-baked demo as fallback) */}
           {phase === "done" && (
-            baked && DEMO_WORLD.meshUrl ? (
-              <MeshViewer url={DEMO_WORLD.meshUrl} />
+            meshUrl || (baked && DEMO_WORLD.meshUrl) ? (
+              <MeshViewer url={meshUrl ?? DEMO_WORLD.meshUrl!} />
             ) : (
               <div className="relative w-full h-full">
                 <Image src={DEMO_WORLD.thumbnailUrl || displayPhoto} alt="Generated world" fill className="object-cover" />
@@ -161,14 +264,14 @@ export default function FakeWorldGenerator({ roomNumber, dimensions, floorPlanUr
         {phase === "done" && (
           <div className="mt-3 flex items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              {baked && DEMO_WORLD.meshUrl ? "Drag to rotate · Scroll to zoom · Right-click to pan" : DEMO_WORLD.caption}
+              {meshUrl || (baked && DEMO_WORLD.meshUrl) ? "Drag to rotate · Scroll to zoom · Right-click to pan" : DEMO_WORLD.caption}
             </p>
             <div className="flex items-center gap-2">
               <button onClick={reset} className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md border border-border hover:bg-accent/10 transition-colors">
                 <RotateCcw className="h-3 w-3" /> Try another
               </button>
-              {DEMO_WORLD.sceneUrl && (
-                <a href={DEMO_WORLD.sceneUrl} target="_blank" rel="noopener noreferrer"
+              {(sceneUrl || DEMO_WORLD.sceneUrl) && (
+                <a href={sceneUrl ?? DEMO_WORLD.sceneUrl!} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md border transition-colors"
                   style={{ color: "var(--color-rose)", borderColor: "var(--color-rose)" }}>
                   Open full world in Marble <ExternalLink className="h-3 w-3" />
