@@ -45,22 +45,36 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
   }, [roomId]);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header */}
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex min-h-screen flex-col gap-0">
+      {/* Header with compact view toggles */}
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-2 sm:gap-3">
           <Button variant="ghost" size="sm" className="gap-1.5 -ml-2" onClick={() => router.push("/")}>
             <ArrowLeft className="h-4 w-4" />
-            Back
+            <span className="hidden sm:inline">Back</span>
           </Button>
           <div className="h-4 w-px bg-border" />
           <span className="font-mono font-bold text-primary">{roomId}</span>
           {room && (
             <>
-              <Badge variant="secondary" className="text-xs">{room.building}</Badge>
-              <Badge variant="outline" className="text-xs capitalize">{room.type}</Badge>
-              {room.sqft && <span className="text-xs text-muted-foreground">{room.sqft} sq ft</span>}
+              <Badge variant="secondary" className="text-xs hidden sm:inline-flex">{room.building}</Badge>
+              <Badge variant="outline" className="text-xs capitalize hidden md:inline-flex">{room.type}</Badge>
+              {room.sqft && <span className="text-xs text-muted-foreground hidden lg:inline">{room.sqft} sq ft</span>}
             </>
+          )}
+
+          {!roomError && (
+            <TabsList className="ml-auto">
+              <TabsTrigger value="3d" className="gap-1.5 px-2.5">
+                <Box className="h-3.5 w-3.5" /> <span className="hidden sm:inline">3D View</span>
+              </TabsTrigger>
+              <TabsTrigger value="style" className="gap-1.5 px-2.5">
+                <Sparkles className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Style It</span>
+              </TabsTrigger>
+              <TabsTrigger value="shop" className="gap-1.5 px-2.5">
+                <ShoppingBag className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Shop</span>
+              </TabsTrigger>
+            </TabsList>
           )}
         </div>
       </header>
@@ -72,19 +86,7 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
             <Button variant="outline" onClick={() => router.push("/")}>Try another room</Button>
           </div>
         ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full max-w-md grid-cols-3">
-              <TabsTrigger value="3d" className="gap-1.5">
-                <Box className="h-3.5 w-3.5" /> 3D View
-              </TabsTrigger>
-              <TabsTrigger value="style" className="gap-1.5">
-                <Sparkles className="h-3.5 w-3.5" /> Style It
-              </TabsTrigger>
-              <TabsTrigger value="shop" className="gap-1.5">
-                <ShoppingBag className="h-3.5 w-3.5" /> Shop
-              </TabsTrigger>
-            </TabsList>
-
+          <>
             <TabsContent value="3d">
               {roomId.toUpperCase() === DEMO_WORLD.roomNumber.toUpperCase() ? (
                 <FakeWorldGenerator
@@ -131,9 +133,9 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
                 roomNumber={roomId}
               />
             </TabsContent>
-          </Tabs>
+          </>
         )}
       </main>
-    </div>
+    </Tabs>
   );
 }
