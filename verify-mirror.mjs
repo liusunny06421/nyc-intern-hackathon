@@ -20,7 +20,7 @@ page.on("response", (res) => {
 });
 
 await page.setViewport({ width: 1280, height: 800 });
-await page.goto("http://localhost:3000/room/B1207", { waitUntil: "networkidle2", timeout: 120000 });
+await page.goto("http://localhost:3000/room/B1207", { waitUntil: "domcontentloaded", timeout: 120000 });
 
 // wait for the furniture sidebar button labeled "Mirror"
 await page.waitForFunction(() => {
