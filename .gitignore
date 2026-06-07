@@ -42,3 +42,7 @@ next-env.d.ts
 
 # Room model cache
 .room-cache/
+
+# local design backup (not part of the project)
+_my-design-backup/
+Untitled

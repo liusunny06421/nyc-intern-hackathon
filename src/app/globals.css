@@ -1,59 +1,219 @@
 @import "tailwindcss";
 
-/* ─── Palette from inspo: dusty rose · warm beige · sage · burgundy · mustard · teal ─── */
-@theme inline {
-  /* Surfaces — warm dark (slight rose undertone to echo the beige) */
-  --color-background: oklch(0.10 0.008 30);
-  --color-foreground: oklch(0.95 0.012 60);
-  --color-card: oklch(0.14 0.008 30);
-  --color-card-foreground: oklch(0.95 0.012 60);
-  --color-popover: oklch(0.14 0.008 30);
-  --color-popover-foreground: oklch(0.95 0.012 60);
+/* ============================================================
+   DormDesign — design tokens
+   Columbia-collegiate blues on a warm editorial paper base.
+   ============================================================ */
+@theme {
+  /* Paper / surface — warm cream (Warm Cream / Sand Beige) */
+  --color-paper: #fff6e6;
+  --color-paper-2: #f1e5d1;
+  --color-paper-3: #e7d8bc;
+  --color-card: #fffdf6;
 
-  /* Primary — dusty rose (Key Color) */
-  --color-primary: oklch(0.70 0.09 12);
-  --color-primary-foreground: oklch(0.12 0.008 30);
+  /* Ink — Charcoal */
+  --color-ink: #1b1b1b;
+  --color-ink-soft: #57514a;
+  --color-ink-faint: #978f80;
 
-  /* Secondary surface */
-  --color-secondary: oklch(0.19 0.008 30);
-  --color-secondary-foreground: oklch(0.95 0.012 60);
+  /* Blues — Cobalt primary + Sky */
+  --color-sky: #7cc8ff;
+  --color-sky-soft: #d6ecff;
+  --color-columbia: #9bd0f5;
+  --color-blue: #2f5bff;       /* Cobalt Blue */
+  --color-blue-deep: #1e40d6;
+  --color-navy: #18255f;       /* deep collegiate ink-blue */
 
-  /* Muted */
-  --color-muted: oklch(0.19 0.008 30);
-  --color-muted-foreground: oklch(0.56 0.012 60);
+  /* Greens — Grass / ivy */
+  --color-grass: #2e7d46;      /* Grass Green */
+  --color-ivy: #2e7d46;
+  --color-ivy-deep: #1f5f3a;
+  --color-leaf: #4f9e68;
+  --color-sage: #6f9e6a;
+  --color-sage-soft: #dbe8cf;
 
-  /* Accent — sage green (Main Accent) */
-  --color-accent: oklch(0.52 0.07 145);
-  --color-accent-foreground: oklch(0.97 0 0);
+  /* Hard pops */
+  --color-sun: #ffd66b;        /* Butter Yellow */
+  --color-butter: #ffd66b;
+  --color-marigold: #f2a01a;
+  --color-tomato: #ff4b4b;     /* Tomato Red */
+  --color-poppy: #ff4b4b;
+  --color-clay: #d9794f;
+  --color-lilac: #c3a6ff;      /* Lilac */
+  --color-bubble: #ef8fb3;
+  --color-mocha: #8b6f4e;      /* Mocha */
+  --color-bulb: #ffd873;       /* warm string-light glow */
 
-  /* Destructive — burgundy repurposed as destructive */
-  --color-destructive: oklch(0.40 0.14 15);
+  /* ── repo brand tokens kept for functional components that reference them ── */
+  --color-rose:     #d98a8a;
+  --color-beige:    #e7d8bc;
+  --color-mustard:  #e6b84d;
+  --color-burgundy: #8f3b3b;
+  --color-teal:     #2f7d8f;
 
-  /* Border & input */
-  --color-border: oklch(0.24 0.008 30);
-  --color-input: oklch(0.19 0.008 30);
-  --color-ring: oklch(0.70 0.09 12);
+  /* ── shadcn/repo semantic tokens, mapped onto the DormDesign palette so the
+     repo's functional UI (room page, viewers, shopping, ui/*) inherits the
+     warm paper look automatically instead of the original dark theme ── */
+  --color-background: var(--color-paper);
+  --color-foreground: var(--color-ink);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-card);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-blue);
+  --color-primary-foreground: var(--color-paper);
+  --color-secondary: var(--color-paper-2);
+  --color-secondary-foreground: var(--color-navy);
+  --color-muted: var(--color-paper-2);
+  --color-muted-foreground: var(--color-ink-soft);
+  --color-accent: var(--color-grass);
+  --color-accent-foreground: #ffffff;
+  --color-destructive: var(--color-tomato);
+  --color-border: color-mix(in srgb, var(--color-navy) 12%, transparent);
+  --color-input: color-mix(in srgb, var(--color-navy) 14%, transparent);
+  --color-ring: var(--color-blue);
 
-  /* ── Brand palette tokens ── */
-  --color-rose:     oklch(0.70 0.09 12);   /* Key Color — dusty rose */
-  --color-beige:    oklch(0.87 0.04 70);   /* Key Neutral — warm beige */
-  --color-sage:     oklch(0.52 0.07 145);  /* Main Accent — sage green */
-  --color-burgundy: oklch(0.40 0.14 15);   /* Secondary — deep crimson */
-  --color-mustard:  oklch(0.74 0.15 85);   /* Secondary — golden yellow */
-  --color-teal:     oklch(0.54 0.11 210);  /* Secondary — peacock teal */
-
+  /* radii (from repo) */
   --radius: 0.75rem;
   --radius-xs: calc(var(--radius) * 0.5);
   --radius-sm: calc(var(--radius) * 0.75);
   --radius-md: calc(var(--radius) * 0.875);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.5);
-  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", "Geist Mono", monospace;
+
+  /* Motion */
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Animations */
+  --animate-float-slow: float-slow 9s ease-in-out infinite;
+  --animate-float-slower: float-slow 13s ease-in-out infinite;
+  --animate-drift: drift 22s ease-in-out infinite;
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-spin-slow: spin 26s linear infinite;
+  --animate-pulse-soft: pulse-soft 4.5s ease-in-out infinite;
+  --animate-twinkle: twinkle 3.2s ease-in-out infinite;
+  --animate-sway: sway 6s ease-in-out infinite;
+  --animate-wobble: wobble 5s ease-in-out infinite;
 }
 
+@keyframes twinkle {
+  0%, 100% { opacity: 0.55; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+@keyframes sway {
+  0%, 100% { transform: rotate(-2.5deg); }
+  50% { transform: rotate(2.5deg); }
+}
+@keyframes wobble {
+  0%, 100% { transform: rotate(-3deg) translate3d(0, 0, 0); }
+  50% { transform: rotate(3deg) translate3d(0, -3px, 0); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -14px, 0); }
+}
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(28px, -22px, 0) scale(1.06); }
+  66% { transform: translate3d(-22px, 16px, 0) scale(0.96); }
+}
+@keyframes marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.04); }
+}
+@keyframes reveal-up {
+  from { opacity: 0; transform: translate3d(0, 28px, 0); filter: blur(6px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
 body {
-  background: var(--color-background);
-  color: var(--color-foreground);
+  background:
+    /* warm natural sunlight pouring from top-right */
+    radial-gradient(70% 55% at 92% -8%, color-mix(in srgb, var(--color-sun) 55%, transparent) 0%, transparent 46%),
+    /* cool sky light from top-left */
+    radial-gradient(60% 50% at 4% -4%, color-mix(in srgb, var(--color-sky) 45%, transparent) 0%, transparent 42%),
+    /* ivy-green hint creeping from the bottom */
+    radial-gradient(70% 45% at 100% 102%, color-mix(in srgb, var(--color-grass) 14%, transparent) 0%, transparent 44%),
+    var(--color-paper);
+  background-attachment: fixed;
+  color: var(--color-ink);
   font-family: var(--font-sans);
+}
+
+/* Film-grain overlay — fixed, never attached to scrolling content */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection { background: color-mix(in srgb, var(--color-blue) 22%, transparent); }
+
+/* Thin custom scrollbar */
+* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--color-navy) 22%, transparent) transparent; }
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-navy) 22%, transparent);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* ============================================================
+   Component-ish utilities
+   ============================================================ */
+@layer utilities {
+  /* concentric inner core highlight */
+  .inner-core {
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.6),
+      inset 0 -1px 1px rgba(28, 27, 22, 0.04);
+  }
+  /* soft diffused ambient shadow (Soft Structuralism) */
+  .ambient {
+    box-shadow:
+      0 1px 1px rgba(12, 38, 87, 0.03),
+      0 18px 40px -22px rgba(12, 38, 87, 0.28),
+      0 40px 80px -50px rgba(12, 38, 87, 0.35);
+  }
+  .ambient-lg {
+    box-shadow:
+      0 2px 2px rgba(12, 38, 87, 0.03),
+      0 30px 60px -28px rgba(12, 38, 87, 0.30),
+      0 70px 120px -60px rgba(12, 38, 87, 0.40);
+  }
+  .ambient-blue {
+    box-shadow:
+      0 18px 40px -20px rgba(47, 99, 184, 0.5),
+      0 40px 90px -50px rgba(22, 63, 134, 0.55);
+  }
+  .hairline { box-shadow: inset 0 0 0 1px rgba(12, 38, 87, 0.08); }
+
+  /* scroll reveal — toggled by IntersectionObserver via [data-reveal] */
+  .reveal-init { opacity: 0; transform: translate3d(0, 28px, 0); filter: blur(6px); }
+  .reveal-in { animation: reveal-up 0.85s var(--ease-spring) forwards; }
+  .anim-in { animation: reveal-up 0.6s var(--ease-spring) both; }
+
+  .text-balance { text-wrap: balance; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-init { opacity: 1 !important; transform: none !important; filter: none !important; }
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
 }

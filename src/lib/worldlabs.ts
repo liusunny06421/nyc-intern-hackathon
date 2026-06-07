@@ -96,6 +96,56 @@ export async function prepareUpload(fileName: string, extension: string): Promis
   return res.json();
 }
 
+// Upload a single image and return its media_asset_id (reusable across generate calls).
+export async function uploadMediaAsset(buffer: Buffer, fileName: string, extension: string, contentType: string): Promise<string> {
+  const prepared = await prepareUpload(fileName, extension);
+  const up = prepared.upload_info;
+  const res = await fetch(up.upload_url, {
+    method: (up.upload_method || "PUT") as string,
+    headers: { "Content-Type": contentType, ...(up.required_headers ?? {}) },
+    body: new Uint8Array(buffer),
+  });
+  if (!res.ok) throw new Error(`WorldLabs upload PUT failed: ${res.status} ${await res.text()}`);
+  return prepared.media_asset.media_asset_id;
+}
+
+// Generate a world from one or more uploaded media assets.
+// One photo → single-image mode; multiple → multi-image mode with evenly-spread azimuths.
+export async function generateFromMediaAssets(assetIds: string[], displayName = "My dorm room"): Promise<Operation> {
+  if (assetIds.length === 0) throw new Error("at least one media asset is required");
+
+  const common = {
+    display_name: displayName,
+    model: "marble-1.0-draft",
+    permission: { public: false, allow_id_access: true },
+  };
+
+  const body =
+    assetIds.length === 1
+      ? {
+          world_prompt: { type: "image", image_prompt: { source: "media_asset", media_asset_id: assetIds[0] }, is_pano: false },
+          ...common,
+        }
+      : {
+          world_prompt: {
+            type: "multi-image",
+            multi_image_prompt: assetIds.map((id, i) => ({
+              azimuth: Math.round((360 / assetIds.length) * i),
+              content: { source: "media_asset", media_asset_id: id },
+            })),
+          },
+          ...common,
+        };
+
+  const res = await fetch(`${WORLDLABS_BASE}/worlds:generate`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`WorldLabs generate failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
 export async function uploadAndGenerate(buffer: Buffer, fileName: string, extension: string, contentType: string): Promise<Operation> {
   const prepared = await prepareUpload(fileName, extension);
   await fetch(prepared.upload_info.upload_url, {
