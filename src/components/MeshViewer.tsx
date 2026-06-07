@@ -1,16 +1,31 @@
 "use client";
 
-import { Suspense, useLayoutEffect, useRef } from "react";
+import { Suspense, useLayoutEffect, useRef, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Environment, Html } from "@react-three/drei";
-import { Loader2 } from "lucide-react";
+import { Box, Check, Loader2 } from "lucide-react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import FurniturePiece from "./FurniturePiece";
 
 // World Labs exports meshes Y-down; rotate 180° about X to make it Y-up.
 const MESH_ROTATION: [number, number, number] = [Math.PI, 0, 0];
 
-function Model({ url, controls }: { url: string; controls: React.RefObject<OrbitControlsImpl | null> }) {
+const FURNITURE_ITEMS = [
+  { id: "piece-1", label: "Piece 1", url: "/reference/demo/3cb5b679bb8e21c509cbdd1de8e0b6ab.glb" },
+  { id: "piece-2", label: "Piece 2", url: "/reference/demo/7dc3f5ae8434c9bb772bc49ee85e8f1e.glb" },
+  { id: "piece-3", label: "Piece 3", url: "/reference/demo/c52142f240988296e6994010bd010586.glb" },
+];
+
+function Model({
+  url,
+  controls,
+  roomSceneRef,
+}: {
+  url: string;
+  controls: React.RefObject<OrbitControlsImpl | null>;
+  roomSceneRef: React.RefObject<THREE.Group | null>;
+}) {
   const { scene } = useGLTF(url);
   const { camera } = useThree();
   const ref = useRef<THREE.Group>(null);
@@ -50,7 +65,16 @@ function Model({ url, controls }: { url: string; controls: React.RefObject<Orbit
     }
   }, [scene, camera, controls]);
 
-  return <primitive ref={ref} object={scene} rotation={MESH_ROTATION} />;
+  return (
+    <primitive
+      ref={(group: THREE.Group | null) => {
+        ref.current = group;
+        roomSceneRef.current = group;
+      }}
+      object={scene}
+      rotation={MESH_ROTATION}
+    />
+  );
 }
 
 function CanvasLoader() {
@@ -64,19 +88,37 @@ function CanvasLoader() {
   );
 }
 
-export default function MeshViewer({ url }: { url: string }) {
-  const controls = useRef<OrbitControlsImpl | null>(null);
+function SceneContent({
+  url,
+  controls,
+  roomSceneRef,
+  placedItems,
+  selectedId,
+  onSelect,
+}: {
+  url: string;
+  controls: React.RefObject<OrbitControlsImpl | null>;
+  roomSceneRef: React.RefObject<THREE.Group | null>;
+  placedItems: string[];
+  selectedId: string | null;
+  onSelect: (url: string) => void;
+}) {
   return (
-    <Canvas
-      camera={{ position: [0, 1.2, 4], fov: 62 }}
-      dpr={[1, 2]}
-      gl={{ antialias: true, preserveDrawingBuffer: true }}
-    >
+    <>
       <ambientLight intensity={0.9} />
       <directionalLight position={[5, 5, 5]} intensity={1} />
       <directionalLight position={[-5, 3, -5]} intensity={0.4} />
       <Suspense fallback={<CanvasLoader />}>
-        <Model url={url} controls={controls} />
+        <Model url={url} controls={controls} roomSceneRef={roomSceneRef} />
+        {placedItems.map((itemUrl) => (
+          <FurniturePiece
+            key={itemUrl}
+            url={itemUrl}
+            roomScene={roomSceneRef.current}
+            isSelected={selectedId === itemUrl}
+            onSelect={() => onSelect(itemUrl)}
+          />
+        ))}
         <Environment preset="apartment" />
       </Suspense>
       <OrbitControls
@@ -87,6 +129,128 @@ export default function MeshViewer({ url }: { url: string }) {
         maxDistance={20}
         makeDefault
       />
-    </Canvas>
+    </>
+  );
+}
+
+export default function MeshViewer({ url }: { url: string }) {
+  const controls = useRef<OrbitControlsImpl | null>(null);
+  const roomSceneRef = useRef<THREE.Group | null>(null);
+  const [placedItems, setPlacedItems] = useState<string[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  function toggleItem(itemUrl: string) {
+    setPlacedItems((prev) => {
+      if (prev.includes(itemUrl)) {
+        return prev.filter((u) => u !== itemUrl);
+      }
+      return [...prev, itemUrl];
+    });
+    setSelectedId((prev) => {
+      if (placedItems.includes(itemUrl) && prev === itemUrl) return null;
+      return prev;
+    });
+  }
+
+  return (
+    <div className="relative w-full h-full">
+      <Canvas
+        camera={{ position: [0, 1.2, 4], fov: 62 }}
+        dpr={[1, 2]}
+        gl={{ antialias: true, preserveDrawingBuffer: true }}
+        onPointerMissed={() => setSelectedId(null)}
+      >
+        <SceneContent
+          url={url}
+          controls={controls}
+          roomSceneRef={roomSceneRef}
+          placedItems={placedItems}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+        />
+      </Canvas>
+
+      <div
+        style={{
+          position: "absolute",
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: 140,
+          background: "rgba(0,0,0,0.6)",
+          backdropFilter: "blur(8px)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          padding: 10,
+          borderRadius: "0 12px 12px 0",
+        }}
+      >
+        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, textAlign: "center" }}>Furniture</span>
+        {FURNITURE_ITEMS.map((item) => {
+          const isPlaced = placedItems.includes(item.url);
+          return (
+            <button
+              key={item.id}
+              onClick={() => toggleItem(item.url)}
+              style={{
+                position: "relative",
+                width: "100%",
+                background: "rgba(255,255,255,0.08)",
+                border: isPlaced ? "1px solid #4A90E2" : "1px solid rgba(255,255,255,0.15)",
+                borderRadius: 8,
+                padding: 8,
+                cursor: "pointer",
+                color: "white",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              {isPlaced && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 4,
+                    right: 4,
+                    width: 14,
+                    height: 14,
+                    borderRadius: "50%",
+                    background: "#4A90E2",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Check size={9} color="white" />
+                </span>
+              )}
+              <Box size={20} />
+              <span style={{ fontSize: 11, textAlign: "center" }}>{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {selectedId !== null && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 12,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(0,0,0,0.55)",
+            color: "white",
+            borderRadius: 8,
+            padding: "8px 10px",
+            fontSize: 12,
+            whiteSpace: "nowrap",
+          }}
+        >
+          [Q] ↺ &nbsp; [E] ↻
+        </div>
+      )}
+    </div>
   );
 }
