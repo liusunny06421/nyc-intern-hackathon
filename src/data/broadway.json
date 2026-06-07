@@ -1,0 +1,255 @@
+{
+  "images": [
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/content/img/Buildings/Hogan/Hogan%20Exterior_Updated%202025.jpg",
+      "alt": "Exterior of Hogan and Broadway Hall entrance",
+      "source": "main",
+      "local": "/reference/broadway/Hogan%20Exterior_Updated%202025.jpg"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/styles/cu_crop/public/content/img/Buildings/Broadway/2023%20Refresh/403A0890.jpg.webp?itok=HB8fyFr0",
+      "alt": "The Broadway building lounge",
+      "source": "main",
+      "local": "/reference/broadway/403A0890.jpg.webp"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/styles/cu_crop/public/content/img/Buildings/Broadway/2023%20Refresh/403A1016.jpg.webp?itok=N3CCGlgX",
+      "alt": "First floor lobby of Broadway Hall",
+      "source": "main",
+      "local": "/reference/broadway/403A1016.jpg.webp"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/styles/cu_crop/public/content/img/Buildings/Broadway/2023%20Refresh/403A0062.jpg.webp?itok=vUJcsxyY",
+      "alt": "Student lounge",
+      "source": "main",
+      "local": "/reference/broadway/403A0062.jpg.webp"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/styles/cu_crop/public/content/img/Buildings/Broadway/2023%20Refresh/403A0813.jpg.webp?itok=5eKjko0i",
+      "alt": "Single-use bathroom",
+      "source": "main",
+      "local": "/reference/broadway/403A0813.jpg.webp"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/styles/cu_crop/public/content/img/Buildings/Broadway/2023%20Refresh/403A0848.jpg.webp?itok=DonSEpmu",
+      "alt": "Shared bathroom",
+      "source": "main",
+      "local": "/reference/broadway/403A0848.jpg.webp"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/styles/cu_crop/public/content/img/Buildings/Broadway/2023%20Refresh/403A0829.jpg.webp?itok=AEcB_cof",
+      "alt": "Shared floor kitchen",
+      "source": "main",
+      "local": "/reference/broadway/403A0829.jpg.webp"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/styles/cu_crop/public/content/img/Buildings/Broadway/2023%20Refresh/403A0105.jpg.webp?itok=GPF16r1H",
+      "alt": "Broadway Single",
+      "source": "main",
+      "local": "/reference/broadway/403A0105.jpg.webp"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/styles/cu_crop/public/content/img/Buildings/Broadway/2023%20Refresh/403A0141.jpg.webp?itok=WSBTsiEk",
+      "alt": "double room",
+      "source": "main",
+      "local": "/reference/broadway/403A0141.jpg.webp"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/styles/cu_crop/public/content/img/Buildings/Broadway/2023%20Refresh/403A0180.jpg.webp?itok=1KMkydD3",
+      "alt": "Single room",
+      "source": "main",
+      "local": "/reference/broadway/403A0180.jpg.webp"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/styles/cu_crop/public/content/img/Buildings/Broadway/2023%20Refresh/403A0213_0.jpg.webp?itok=IWdBowp9",
+      "alt": "Double room",
+      "source": "main",
+      "local": "/reference/broadway/403A0213_0.jpg.webp"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/styles/cu_crop/public/content/img/Buildings/Broadway/2023%20Refresh/403A0203.jpg.webp?itok=eMYMzILc",
+      "alt": "Double room",
+      "source": "main",
+      "local": "/reference/broadway/403A0203.jpg.webp"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/styles/cu_crop/public/content/img/News%20Articles/Fitness%20Room%20Refresh%202026/Broadway%20fitness%20room.jpg.webp?itok=I_t_lO-6",
+      "alt": "fitness room",
+      "source": "main",
+      "local": "/reference/broadway/Broadway%20fitness%20room.jpg.webp"
+    },
+    {
+      "url": "https://roomselection.housing.columbia.edu/sites/roomselection.housing.columbia.edu/files/content/img/Buildings/Broadway/556W114.jpg",
+      "alt": "Broadway Hall",
+      "source": "roomselection",
+      "local": "/reference/broadway/556W114.jpg"
+    },
+    {
+      "url": "https://roomselection.housing.columbia.edu/sites/roomselection.housing.columbia.edu/files/styles/cu_crop/public/content/img/Buildings/Broadway/BroadwayFloorLounge.jpg.webp?itok=1sU-koDY",
+      "alt": "Broadway floor lounge",
+      "source": "roomselection",
+      "local": "/reference/broadway/BroadwayFloorLounge.jpg.webp"
+    }
+  ],
+  "floorPlans": [
+    {
+      "url": "https://www.housing.columbia.edu/content/3-2-combined-plan-housing",
+      "text": "3-2 Combined Plan Housing",
+      "source": "main"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/3.pdf",
+      "text": "Broadway 3rd Floor",
+      "source": "main"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/4.pdf",
+      "text": "Broadway 4th Floor",
+      "source": "main"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/5.pdf",
+      "text": "Broadway 5th Floor",
+      "source": "main"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/www.housing.columbia.edu/files/content/img/Buildings/Floor%20Plans/Broadway/Broadway%206th%20floor.png",
+      "text": "Broadway 6th Floor",
+      "source": "main"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/7.pdf",
+      "text": "Broadway 7th Floor",
+      "source": "main"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/8.pdf",
+      "text": "Broadway 8th Floor",
+      "source": "main"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/9.pdf",
+      "text": "Broadway 9th Floor",
+      "source": "main"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/10.pdf",
+      "text": "Broadway 10th Floor",
+      "source": "main"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/11.pdf",
+      "text": "Broadway 11th Floor",
+      "source": "main"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/12.pdf",
+      "text": "Broadway 12th Floor",
+      "source": "main"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/13.pdf",
+      "text": "Broadway 13th Floor",
+      "source": "main"
+    },
+    {
+      "url": "https://www.housing.columbia.edu/sites/default/files/content/Fire_Safety/Fire%20Safety%20Plan%20-%20BroadwayRes%20-%20Rev%202022-08-26.pdf",
+      "text": "Broadway Hall Fire Safety Plan",
+      "source": "main"
+    },
+    {
+      "url": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/BWY_FL_03.jpg",
+      "text": "Broadway 3rd Floor",
+      "source": "roomselection",
+      "local": "/reference/broadway/floorplans/floor-03.jpg",
+      "floor": 3
+    },
+    {
+      "url": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/BWY_FL_04.jpg",
+      "text": "Broadway 4th Floor",
+      "source": "roomselection",
+      "local": "/reference/broadway/floorplans/floor-04.jpg",
+      "floor": 4
+    },
+    {
+      "url": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/BWY_FL_05.jpg",
+      "text": "Broadway 5th Floor",
+      "source": "roomselection",
+      "local": "/reference/broadway/floorplans/floor-05.jpg",
+      "floor": 5
+    },
+    {
+      "url": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/BWY_FL_06.jpg",
+      "text": "Broadway 6th Floor",
+      "source": "roomselection",
+      "local": "/reference/broadway/floorplans/floor-06.jpg",
+      "floor": 6
+    },
+    {
+      "url": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/BWY_FL_07.jpg",
+      "text": "Broadway 7th Floor",
+      "source": "roomselection",
+      "local": "/reference/broadway/floorplans/floor-07.jpg",
+      "floor": 7
+    },
+    {
+      "url": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/BWY_FL_08.jpg",
+      "text": "Broadway 8th Floor",
+      "source": "roomselection",
+      "local": "/reference/broadway/floorplans/floor-08.jpg",
+      "floor": 8
+    },
+    {
+      "url": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/BWY_FL_09.jpg",
+      "text": "Broadway 9th Floor",
+      "source": "roomselection",
+      "local": "/reference/broadway/floorplans/floor-09.jpg",
+      "floor": 9
+    },
+    {
+      "url": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/BWY_FL_10.jpg",
+      "text": "Broadway 10th Floor",
+      "source": "roomselection",
+      "local": "/reference/broadway/floorplans/floor-10.jpg",
+      "floor": 10
+    },
+    {
+      "url": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/BWY_FL_11.jpg",
+      "text": "Broadway 11th Floor",
+      "source": "roomselection",
+      "local": "/reference/broadway/floorplans/floor-11.jpg",
+      "floor": 11
+    },
+    {
+      "url": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/BWY_FL_12.jpg",
+      "text": "Broadway 12th Floor",
+      "source": "roomselection",
+      "local": "/reference/broadway/floorplans/floor-12.jpg",
+      "floor": 12
+    },
+    {
+      "url": "https://roomselection.housing.columbia.edu/sites/default/files/content/img/Buildings/Floor%20Plans/Broadway/BWY_FL_13.jpg",
+      "text": "Broadway 13th Floor",
+      "source": "roomselection",
+      "local": "/reference/broadway/floorplans/floor-13.jpg",
+      "floor": 13
+    }
+  ],
+  "scrapedAt": "2026-06-07T18:08:13.280Z",
+  "sources": [
+    {
+      "key": "main",
+      "url": "https://www.housing.columbia.edu/broadway",
+      "title": "Broadway Hall | Columbia Housing",
+      "imageCount": 26,
+      "linkCount": 176
+    },
+    {
+      "key": "roomselection",
+      "url": "https://roomselection.housing.columbia.edu/broadway",
+      "title": "Broadway Hall | Room Selection",
+      "imageCount": 4,
+      "linkCount": 96
+    }
+  ]
+}

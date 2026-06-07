@@ -1,0 +1,13 @@
+{
+  "roomNumber": "B1207",
+  "worldId": "7fc55bbc-1c57-4945-abd1-3a9cd3d2e5d2",
+  "displayName": "Broadway River-View",
+  "sceneUrl": "https://marble.worldlabs.ai/world/7fc55bbc-1c57-4945-abd1-3a9cd3d2e5d2",
+  "meshUrl": "/reference/demo/demo-mesh.glb",
+  "meshUrlRemote": "https://cdn.marble.worldlabs.ai/7fc55bbc-1c57-4945-abd1-3a9cd3d2e5d2/a2278964.glb",
+  "thumbnailUrl": "/reference/demo/demo-thumb.jpg",
+  "caption": "The scene is a minimalist dorm room, captured in a realistic style, showcasing a functional and serene living space. The overall tone is calm and organized, with a focus on simplicity and utility. The room features light-colored walls and a floor with a distinctive tiled pattern that extends throughout the entire space. A wooden bed frame is positioned on the left, with a simple, light-colored bedspread. Adjacent to the bed, a wooden dresser with multiple drawers provides storage. On the opposite side of the room, a wooden desk with an integrated hutch and a chair is centrally placed, equipped with a black desk lamp. The window is expansive, featuring multiple panels that offer a broad view of the outside, hinting at a natural landscape beyond. The desk and chair are positioned to the right of the room, facing the wall. The dresser stands against the left wall, next to the bed. The 360 scene is faultless.",
+  "panoUrl": null,
+  "sourcePhoto": "/reference/demo/river-room.png",
+  "bakedAt": "2026-06-07T18:34:13.535Z"
+}

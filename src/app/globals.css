@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+/* ─── Palette from inspo: dusty rose · warm beige · sage · burgundy · mustard · teal ─── */
+@theme inline {
+  /* Surfaces — warm dark (slight rose undertone to echo the beige) */
+  --color-background: oklch(0.10 0.008 30);
+  --color-foreground: oklch(0.95 0.012 60);
+  --color-card: oklch(0.14 0.008 30);
+  --color-card-foreground: oklch(0.95 0.012 60);
+  --color-popover: oklch(0.14 0.008 30);
+  --color-popover-foreground: oklch(0.95 0.012 60);
+
+  /* Primary — dusty rose (Key Color) */
+  --color-primary: oklch(0.70 0.09 12);
+  --color-primary-foreground: oklch(0.12 0.008 30);
+
+  /* Secondary surface */
+  --color-secondary: oklch(0.19 0.008 30);
+  --color-secondary-foreground: oklch(0.95 0.012 60);
+
+  /* Muted */
+  --color-muted: oklch(0.19 0.008 30);
+  --color-muted-foreground: oklch(0.56 0.012 60);
+
+  /* Accent — sage green (Main Accent) */
+  --color-accent: oklch(0.52 0.07 145);
+  --color-accent-foreground: oklch(0.97 0 0);
+
+  /* Destructive — burgundy repurposed as destructive */
+  --color-destructive: oklch(0.40 0.14 15);
+
+  /* Border & input */
+  --color-border: oklch(0.24 0.008 30);
+  --color-input: oklch(0.19 0.008 30);
+  --color-ring: oklch(0.70 0.09 12);
+
+  /* ── Brand palette tokens ── */
+  --color-rose:     oklch(0.70 0.09 12);   /* Key Color — dusty rose */
+  --color-beige:    oklch(0.87 0.04 70);   /* Key Neutral — warm beige */
+  --color-sage:     oklch(0.52 0.07 145);  /* Main Accent — sage green */
+  --color-burgundy: oklch(0.40 0.14 15);   /* Secondary — deep crimson */
+  --color-mustard:  oklch(0.74 0.15 85);   /* Secondary — golden yellow */
+  --color-teal:     oklch(0.54 0.11 210);  /* Secondary — peacock teal */
+
+  --radius: 0.75rem;
+  --radius-xs: calc(var(--radius) * 0.5);
+  --radius-sm: calc(var(--radius) * 0.75);
+  --radius-md: calc(var(--radius) * 0.875);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
