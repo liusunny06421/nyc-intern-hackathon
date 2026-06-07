@@ -17,7 +17,7 @@ const fredoka = Fredoka({
 });
 
 export const metadata: Metadata = {
-  title: "DormDesign — See it. Style it. Live it.",
+  title: "The Shaft — See it. Style it. Live it.",
   description:
     "Enter your dorm room number and instantly explore a navigable 3D rendering of your actual room. Pull in inspiration, see furniture that physically fits, and shop real products from IKEA and Target.",
 };

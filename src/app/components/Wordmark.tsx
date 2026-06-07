@@ -19,8 +19,8 @@ export default function Wordmark({ className = "h-7 w-auto", tone = "default" }:
         </svg>
       </span>
       <span className="font-display text-[1.18em] font-semibold leading-none tracking-[-0.02em]">
-        <span className={first}>Dorm</span>
-        <span className={second}>Design</span>
+        <span className={first}>The</span>
+        <span className={second}>Shaft</span>
       </span>
     </span>
   );
