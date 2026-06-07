@@ -7,10 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Upload, Sparkles, X, Loader2, ImagePlus } from "lucide-react";
 import Image from "next/image";
+import { fileToBase64 } from "@/lib/utils";
 
 interface Props {
   roomNumber: string;
   dimensions?: { width: number; length: number; height: number };
+  initialStyles?: string[];
   onStylesDetected: (styles: string[]) => void;
 }
 
@@ -19,9 +21,9 @@ const STYLE_TAGS = [
   "modern", "aesthetic", "vintage", "coastal", "dark academia",
 ];
 
-export default function InspirationPanel({ roomNumber, dimensions, onStylesDetected }: Props) {
+export default function InspirationPanel({ roomNumber, dimensions, initialStyles = [], onStylesDetected }: Props) {
   const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
-  const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
+  const [selectedStyles, setSelectedStyles] = useState<string[]>(initialStyles);
   const [analyzing, setAnalyzing] = useState(false);
   const [detectedStyles, setDetectedStyles] = useState<string[]>([]);
 
@@ -54,10 +56,30 @@ export default function InspirationPanel({ roomNumber, dimensions, onStylesDetec
   };
 
   const handleAnalyze = async () => {
-    const styles = selectedStyles.length > 0 ? selectedStyles : ["modern", "minimalist"];
     setAnalyzing(true);
-    // Simulate style analysis — in production, call Claude vision API
-    await new Promise((r) => setTimeout(r, 1800));
+    let styles = [...selectedStyles];
+    try {
+      if (images.length > 0) {
+        const payload = await Promise.all(
+          images.map(async (img) => ({
+            media_type: img.file.type || "image/jpeg",
+            data: await fileToBase64(img.file),
+          })),
+        );
+        const res = await fetch("/api/analyze-style", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ images: payload }),
+        });
+        const data = await res.json();
+        if (Array.isArray(data.styles) && data.styles.length) {
+          styles = Array.from(new Set([...data.styles, ...selectedStyles]));
+        }
+      }
+    } catch {
+      /* fall back to the manually-selected styles */
+    }
+    if (styles.length === 0) styles = ["modern", "minimalist"];
     setDetectedStyles(styles);
     setAnalyzing(false);
     onStylesDetected(styles);

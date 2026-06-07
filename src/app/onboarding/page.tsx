@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { fileToBase64 } from "@/lib/utils";
 import Wordmark from "../components/Wordmark";
 import RoomScene from "../components/RoomScene";
 import StringLights from "../components/StringLights";
@@ -54,7 +56,10 @@ export default function Onboarding() {
   // lands on the rich 3D world out of the box; users can change them.
   const [room, setRoom] = useState("1207");
   const [floor, setFloor] = useState("12");
-  const [uploaded, setUploaded] = useState(0);
+  const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
   const [keywords, setKeywords] = useState<string[]>(["Japandi"]);
 
   const steps = ["Building", "Room", "Inspiration"];
@@ -68,6 +73,49 @@ export default function Onboarding() {
   const roomDigits = room.replace(/\D/g, "");
   const roomId = roomDigits ? `B${roomDigits}` : "B1207";
   const roomHref = `/room/${roomId}`;
+
+  const addFiles = (files: FileList | null) => {
+    if (!files) return;
+    const next = Array.from(files)
+      .slice(0, 6 - images.length)
+      .map((file) => ({ file, preview: URL.createObjectURL(file) }));
+    setImages((prev) => [...prev, ...next]);
+  };
+  const removeImage = (i: number) =>
+    setImages((prev) => {
+      URL.revokeObjectURL(prev[i].preview);
+      return prev.filter((_, idx) => idx !== i);
+    });
+
+  // Analyze any uploaded inspo with Claude vision, then enter the room carrying
+  // the detected/selected styles so the Shop tab recommends matching furniture.
+  const enterRoom = async () => {
+    setSubmitting(true);
+    let styles = [...keywords];
+    try {
+      if (images.length > 0) {
+        const payload = await Promise.all(
+          images.map(async (img) => ({
+            media_type: img.file.type || "image/jpeg",
+            data: await fileToBase64(img.file),
+          })),
+        );
+        const res = await fetch("/api/analyze-style", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ images: payload }),
+        });
+        const data = await res.json();
+        if (Array.isArray(data.styles) && data.styles.length) {
+          styles = Array.from(new Set([...data.styles, ...keywords]));
+        }
+      }
+    } catch {
+      /* fall back to the manually-picked keywords */
+    }
+    const qs = styles.length ? `?styles=${encodeURIComponent(styles.join(","))}` : "";
+    router.push(`${roomHref}${qs}`);
+  };
 
   const toggleKeyword = (k: string) =>
     setKeywords((cur) => (cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k]));
@@ -260,28 +308,49 @@ export default function Onboarding() {
               {/* STEP 2 — inspiration */}
               {step === 2 && (
                 <div key="s2" className="anim-in space-y-5">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      addFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
                   <button
-                    onClick={() => setUploaded((n) => Math.min(n + 2, 6))}
-                    className="group flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-navy/20 bg-paper-2/60 py-8 transition-all duration-500 ease-spring hover:border-navy/40 hover:bg-paper-2"
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={images.length >= 6}
+                    className="group flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-navy/20 bg-paper-2/60 py-8 transition-all duration-500 ease-spring hover:border-navy/40 hover:bg-paper-2 disabled:opacity-50"
                   >
                     <span className="flex h-12 w-12 items-center justify-center rounded-full bg-card text-blue ambient transition-transform duration-500 ease-spring group-hover:-translate-y-1">
                       <Upload className="h-6 w-6" />
                     </span>
                     <span className="text-sm font-semibold text-navy">
-                      {uploaded === 0 ? "Upload inspo pics" : `${uploaded} pics added — tap for more`}
+                      {images.length === 0
+                        ? "Upload inspo pics"
+                        : `${images.length} pic${images.length > 1 ? "s" : ""} added — tap for more`}
                     </span>
-                    <span className="text-[11px] text-ink-faint">Pinterest, screenshots, anything</span>
+                    <span className="text-[11px] text-ink-faint">Pinterest, screenshots, anything · up to 6</span>
                   </button>
 
-                  {uploaded > 0 && (
-                    <div className="anim-in flex gap-2">
-                      {Array.from({ length: uploaded }).map((_, i) => (
-                        <span
-                          key={i}
-                          className={`h-12 flex-1 rounded-xl bg-gradient-to-br inner-core ${
-                            ["from-clay/40 to-sun/30", "from-sky to-columbia/40", "from-sage-soft to-sage/40"][i % 3]
-                          }`}
-                        />
+                  {images.length > 0 && (
+                    <div className="anim-in grid grid-cols-3 gap-2 sm:grid-cols-6">
+                      {images.map((img, i) => (
+                        <div key={i} className="group relative aspect-square overflow-hidden rounded-xl bg-paper-2 inner-core">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- local object-URL preview */}
+                          <img src={img.preview} alt={`Inspo ${i + 1}`} className="h-full w-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            aria-label="Remove image"
+                            className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-navy/80 text-paper opacity-0 transition-opacity group-hover:opacity-100"
+                          >
+                            <span className="text-xs leading-none">×</span>
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -343,15 +412,17 @@ export default function Onboarding() {
                     </span>
                   </button>
                 ) : (
-                  <Link
-                    href={roomHref}
-                    className="group inline-flex items-center gap-2 rounded-full bg-blue py-2.5 pl-5 pr-2 text-sm font-semibold text-paper ambient-blue transition-all duration-500 ease-spring hover:bg-blue-deep active:scale-[0.98]"
+                  <button
+                    type="button"
+                    onClick={enterRoom}
+                    disabled={submitting}
+                    className="group inline-flex items-center gap-2 rounded-full bg-blue py-2.5 pl-5 pr-2 text-sm font-semibold text-paper ambient-blue transition-all duration-500 ease-spring hover:bg-blue-deep active:scale-[0.98] disabled:opacity-60"
                   >
-                    Enter my room
+                    {submitting ? "Analyzing your vibe…" : "Enter my room"}
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-paper/15 transition-transform duration-500 ease-spring group-hover:translate-x-0.5 group-hover:-translate-y-px">
                       <ArrowUpRight className="h-4 w-4" />
                     </span>
-                  </Link>
+                  </button>
                 )}
               </div>
             </div>

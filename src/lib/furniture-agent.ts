@@ -124,10 +124,10 @@ function buildPrompt(q: FurnitureQuery): { system: string; user: string } {
     "Method:",
     "1. Use web_search to find specific dorm-appropriate products that match the requested style and fit the room.",
     "2. For each promising product, use web_fetch on its product page to read the EXACT current price and the primary product image URL (the og:image / main image on the retailer's CDN).",
-    "3. Only include a product if it physically fits the room (compare its footprint in inches to the room size) and you have a real, loadable image URL and a working product URL.",
-    "4. Prefer small-footprint, dorm-friendly, affordable items. Beds should be twin/twin-XL scale.",
+    "3. Only include a product if ALL of these hold: you successfully fetched its product page with web_fetch (it loaded and showed the live product, not a 404/redirect/search page), it physically fits the room (compare its footprint in inches to the room size), and you read a real image URL and the canonical product URL directly from that page.",
+    "4. Never include a productUrl you did not personally fetch and confirm resolves to that exact product. Drop anything you could not verify rather than guessing. Prefer small-footprint, dorm-friendly, affordable items; beds should be twin/twin-XL scale.",
     "",
-    "Do not invent products, prices, image URLs, or links. If you are unsure an image URL is real, fetch the page again and read it from the HTML. When finished, call save_products exactly once with the full list.",
+    "Do not invent products, prices, image URLs, or links. If you are unsure an image URL is real, fetch the page again and read it from the HTML. When finished, call save_products exactly once with the full list of verified products.",
   ].join("\n");
 
   const user = [

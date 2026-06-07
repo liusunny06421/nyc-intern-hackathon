@@ -24,13 +24,24 @@ interface RoomData {
   floorPlanUrl?: string;
 }
 
-export default function RoomPage({ params }: { params: Promise<{ roomId: string }> }) {
+export default function RoomPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ roomId: string }>;
+  searchParams: Promise<{ styles?: string }>;
+}) {
   const { roomId } = use(params);
+  const { styles: stylesParam } = use(searchParams);
   const router = useRouter();
 
   const [room, setRoom] = useState<RoomData | null>(null);
   const [roomError, setRoomError] = useState("");
   const [activeTab, setActiveTab] = useState("3d");
+  // Styles detected during onboarding (carried via ?styles=) or in the Style It tab.
+  const [styles, setStyles] = useState<string[]>(
+    (stylesParam ?? "").split(",").map((s) => s.trim()).filter(Boolean),
+  );
 
   // Hackathon demo: live World Labs generation is disabled. The 3D experience is
   // a pre-baked world revealed behind a fake upload (see FakeWorldGenerator).
@@ -121,7 +132,9 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
               <InspirationPanel
                 roomNumber={roomId}
                 dimensions={room?.dimensions}
-                onStylesDetected={(styles) => {
+                initialStyles={styles}
+                onStylesDetected={(detected) => {
+                  setStyles(detected);
                   setActiveTab("shop");
                 }}
               />
@@ -131,6 +144,7 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
               <ShoppingPanel
                 dimensions={room?.dimensions}
                 roomNumber={roomId}
+                styles={styles}
               />
             </TabsContent>
           </>

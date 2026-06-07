@@ -12,6 +12,7 @@ import type { FurnitureItem } from "@/lib/furniture";
 interface Props {
   dimensions?: { width: number; length: number; height: number };
   roomNumber: string;
+  styles?: string[];
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -25,11 +26,13 @@ const CATEGORY_LABELS: Record<string, string> = {
   shelf: "Shelves",
 };
 
-export default function ShoppingPanel({ dimensions, roomNumber }: Props) {
+export default function ShoppingPanel({ dimensions, roomNumber, styles }: Props) {
   const [items, setItems] = useState<FurnitureItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("all");
   const [source, setSource] = useState<"ai" | "static" | null>(null);
+
+  const styleKey = (styles ?? []).join(",");
 
   useEffect(() => {
     if (!dimensions) { setLoading(false); return; }
@@ -37,12 +40,16 @@ export default function ShoppingPanel({ dimensions, roomNumber }: Props) {
     fetch("/api/furniture", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ width: dimensions.width, length: dimensions.length }),
+      body: JSON.stringify({
+        width: dimensions.width,
+        length: dimensions.length,
+        styles: styleKey ? styleKey.split(",") : [],
+      }),
     })
       .then((r) => r.json())
       .then((data) => { setItems(data.items ?? []); setSource(data.source ?? null); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [dimensions]);
+  }, [dimensions, styleKey]);
 
   const filtered = category === "all" ? items : items.filter((i) => i.category === category);
   const categories = ["all", ...Array.from(new Set(items.map((i) => i.category)))];
