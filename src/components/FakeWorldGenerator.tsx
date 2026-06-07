@@ -246,7 +246,7 @@ export default function FakeWorldGenerator({ roomNumber, dimensions, floorPlanUr
           {/* DONE — reveal the generated world (or the pre-baked demo as fallback) */}
           {phase === "done" && (
             meshUrl || (baked && DEMO_WORLD.meshUrl) ? (
-              <MeshViewer url={meshUrl ?? DEMO_WORLD.meshUrl!} />
+              <MeshViewer spzUrl={DEMO_WORLD.spzUrl!} meshUrl={meshUrl ?? DEMO_WORLD.meshUrl!} />
             ) : (
               <div className="relative w-full h-full">
                 <Image src={DEMO_WORLD.thumbnailUrl || displayPhoto} alt="Generated world" fill className="object-cover" />

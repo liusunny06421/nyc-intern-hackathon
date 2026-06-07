@@ -1,15 +1,10 @@
 "use client";
 
-import { Suspense, useLayoutEffect, useRef, useState } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, useGLTF, Environment, Html } from "@react-three/drei";
-import { Check, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import FurniturePiece from "./FurniturePiece";
-
-// World Labs exports meshes Y-down; rotate 180° about X to make it Y-up.
-const MESH_ROTATION: [number, number, number] = [Math.PI, 0, 0];
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { SparkRenderer, SplatMesh } from "@sparkjsdev/spark";
 
 const FURNITURE_ITEMS = [
   { id: "mirror", label: "Mirror", url: "/reference/demo/3cb5b679bb8e21c509cbdd1de8e0b6ab.glb", thumb: "/reference/demo/mirror.webp" },
@@ -17,159 +12,295 @@ const FURNITURE_ITEMS = [
   { id: "organizer", label: "Organizer", url: "/reference/demo/c52142f240988296e6994010bd010586.glb", thumb: "/reference/demo/organizer.jpg" },
 ];
 
-function Model({
-  url,
-  controls,
-  roomSceneRef,
-}: {
-  url: string;
-  controls: React.RefObject<OrbitControlsImpl | null>;
-  roomSceneRef: React.RefObject<THREE.Group | null>;
-}) {
-  const { scene } = useGLTF(url);
-  const { camera } = useThree();
-  const ref = useRef<THREE.Group>(null);
+const FURNITURE_LAYER = 0;
+const COLLIDER_LAYER = 1;
+const DRAG_LERP = 0.12;
+const ROTATE_STEP = Math.PI / 12;
 
-  // Auto-frame: stand at the back of the room at eye level, look toward the
-  // far (window) wall — mirrors the Marble default view.
-  useLayoutEffect(() => {
-    const group = ref.current;
-    if (!group) return;
-
-    const box = new THREE.Box3().setFromObject(group);
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
-
-    // Horizontal extent: the longer of X/Z is the room's depth (entrance↔window).
-    const depthAxis: "x" | "z" = size.x >= size.z ? "x" : "z";
-    const depth = size[depthAxis];
-    const eye = center.y + size.y * 0.05; // a touch above center → eye level
-
-    // Camera sits at the near end of the depth axis, target at the far end.
-    const camPos = center.clone();
-    const target = center.clone();
-    camPos[depthAxis] = center[depthAxis] - depth * 0.55;
-    camPos.y = eye;
-    target[depthAxis] = center[depthAxis] + depth * 0.5;
-    target.y = eye;
-
-    camera.position.copy(camPos);
-    (camera as THREE.PerspectiveCamera).near = 0.01;
-    (camera as THREE.PerspectiveCamera).far = Math.max(100, depth * 8);
-    camera.updateProjectionMatrix();
-    camera.lookAt(target);
-
-    if (controls.current) {
-      controls.current.target.copy(target);
-      controls.current.update();
-    }
-  }, [scene, camera, controls]);
-
-  return (
-    <primitive
-      ref={(group: THREE.Group | null) => {
-        ref.current = group;
-        roomSceneRef.current = group;
-      }}
-      object={scene}
-      rotation={MESH_ROTATION}
-    />
-  );
-}
-
-function CanvasLoader() {
-  return (
-    <Html center>
-      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-        <Loader2 className="h-6 w-6 animate-spin" style={{ color: "var(--color-rose)" }} />
-        <span className="text-xs whitespace-nowrap">Loading 3D mesh…</span>
-      </div>
-    </Html>
-  );
-}
-
-function SceneContent({
-  url,
-  controls,
-  roomSceneRef,
-  placedItems,
-  selectedId,
-  onSelect,
-}: {
-  url: string;
-  controls: React.RefObject<OrbitControlsImpl | null>;
-  roomSceneRef: React.RefObject<THREE.Group | null>;
-  placedItems: string[];
-  selectedId: string | null;
-  onSelect: (url: string) => void;
-}) {
-  return (
-    <>
-      <ambientLight intensity={0.9} />
-      <directionalLight position={[5, 5, 5]} intensity={1} />
-      <directionalLight position={[-5, 3, -5]} intensity={0.4} />
-      <Suspense fallback={<CanvasLoader />}>
-        <Model url={url} controls={controls} roomSceneRef={roomSceneRef} />
-        {placedItems.map((itemUrl) => (
-          <FurniturePiece
-            key={itemUrl}
-            url={itemUrl}
-            roomScene={roomSceneRef.current}
-            isSelected={selectedId === itemUrl}
-            onSelect={() => onSelect(itemUrl)}
-          />
-        ))}
-        <Environment preset="apartment" />
-      </Suspense>
-      <OrbitControls
-        ref={controls}
-        enableDamping
-        dampingFactor={0.1}
-        minDistance={0.3}
-        maxDistance={20}
-        makeDefault
-      />
-    </>
-  );
-}
-
-export default function MeshViewer({ url }: { url: string }) {
-  const controls = useRef<OrbitControlsImpl | null>(null);
-  const roomSceneRef = useRef<THREE.Group | null>(null);
+export default function MeshViewer({ spzUrl, meshUrl }: { spzUrl: string; meshUrl: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [placedItems, setPlacedItems] = useState<string[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
+
+  // Mirrors React state into refs so the imperative pointer/keyboard handlers
+  // (registered once, outside React's render cycle) always see the latest value.
+  const selectedUrlRef = useRef<string | null>(null);
+  useEffect(() => {
+    selectedUrlRef.current = selectedUrl;
+  }, [selectedUrl]);
+
+  const placedItemsRef = useRef<string[]>([]);
+  useEffect(() => {
+    placedItemsRef.current = placedItems;
+  }, [placedItems]);
+
+  // Bridge between the `placedItems` React state and the imperative scene below.
+  const sceneApiRef = useRef<{ syncFurniture: (urls: string[]) => void } | null>(null);
 
   function toggleItem(itemUrl: string) {
     setPlacedItems((prev) => {
       if (prev.includes(itemUrl)) {
+        if (selectedUrlRef.current === itemUrl) setSelectedUrl(null);
         return prev.filter((u) => u !== itemUrl);
       }
       return [...prev, itemUrl];
     });
-    setSelectedId((prev) => {
-      if (placedItems.includes(itemUrl) && prev === itemUrl) return null;
-      return prev;
-    });
   }
 
-  return (
-    <div className="relative w-full h-full">
-      <Canvas
-        camera={{ position: [0, 1.2, 4], fov: 62 }}
-        dpr={[1, 2]}
-        gl={{ antialias: true, preserveDrawingBuffer: true }}
-        onPointerMissed={() => setSelectedId(null)}
-      >
-        <SceneContent
-          url={url}
-          controls={controls}
-          roomSceneRef={roomSceneRef}
-          placedItems={placedItems}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-        />
-      </Canvas>
+  // ---- Scene setup: vanilla Three.js + SparkJS, run once on mount ----
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(62, container.clientWidth / container.clientHeight, 0.01, 1000);
+    camera.position.set(0, 1.2, 4);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
+
+    const spark = new SparkRenderer({ renderer });
+    scene.add(spark);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.minDistance = 0.5;
+    controls.maxDistance = 20;
+    controls.enablePan = false;
+
+    // Photorealistic Gaussian-splat backdrop — purely visual, never raycast against.
+    const splatMesh = new SplatMesh({ url: spzUrl });
+    scene.add(splatMesh);
+
+    // Invisible collider mesh — used only for raycasting so furniture can snap to the floor.
+    let roomCollider: THREE.Group | null = null;
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1);
+    keyLight.position.set(5, 5, 5);
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+    fillLight.position.set(-5, 3, -5);
+    scene.add(ambient, keyLight, fillLight);
+
+    const gltfLoader = new GLTFLoader();
+    const furnitureObjects = new Map<string, THREE.Group>();
+
+    function colliderFloorCenter(): THREE.Vector3 {
+      if (!roomCollider) return new THREE.Vector3();
+      const box = new THREE.Box3().setFromObject(roomCollider);
+      const center = box.getCenter(new THREE.Vector3());
+      return new THREE.Vector3(center.x, box.max.y, center.z);
+    }
+
+    function loadFurniture(url: string) {
+      if (furnitureObjects.has(url)) return;
+      gltfLoader.load(url, (gltf) => {
+        const group = gltf.scene;
+        group.userData.url = url;
+        group.layers.set(FURNITURE_LAYER);
+        group.traverse((child) => child.layers.set(FURNITURE_LAYER));
+        const floorCenter = colliderFloorCenter();
+        group.position.copy(floorCenter);
+        scene.add(group);
+        furnitureObjects.set(url, group);
+      });
+    }
+
+    function unloadFurniture(url: string) {
+      const group = furnitureObjects.get(url);
+      if (!group) return;
+      scene.remove(group);
+      furnitureObjects.delete(url);
+    }
+
+    // Reconciles the live scene with whatever `placedItems` React state says should be present.
+    function syncFurniture(urls: string[]) {
+      for (const url of urls) loadFurniture(url);
+      for (const url of furnitureObjects.keys()) {
+        if (!urls.includes(url)) unloadFurniture(url);
+      }
+    }
+
+    // Load the invisible collider mesh, then auto-frame the camera on it.
+    gltfLoader.load(meshUrl, (gltf) => {
+      const group = gltf.scene;
+      // World Labs exports meshes Y-down; rotate 180° about X to make it Y-up.
+      group.rotation.x = Math.PI;
+      group.updateMatrixWorld(true);
+      group.traverse((child) => {
+        child.visible = false;
+        child.layers.set(COLLIDER_LAYER);
+      });
+      scene.add(group);
+      roomCollider = group;
+
+      const box = new THREE.Box3().setFromObject(group);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+
+      // Horizontal extent: the longer of X/Z is the room's depth (entrance↔window).
+      const depthAxis: "x" | "z" = size.x >= size.z ? "x" : "z";
+      const depth = size[depthAxis];
+      const eye = center.y + size.y * 0.05; // a touch above center → eye level
+
+      // Camera sits at the near end of the depth axis, target at the far end.
+      const camPos = center.clone();
+      const target = center.clone();
+      camPos[depthAxis] = center[depthAxis] - depth * 0.55;
+      camPos.y = eye;
+      target[depthAxis] = center[depthAxis] + depth * 0.5;
+      target.y = eye;
+
+      camera.position.copy(camPos);
+      camera.near = 0.01;
+      camera.far = Math.max(100, depth * 8);
+      camera.updateProjectionMatrix();
+      camera.lookAt(target);
+
+      controls.target.copy(target);
+      controls.update();
+
+      // Now that the floor exists, place any furniture queued before the collider loaded.
+      syncFurniture(placedItemsRef.current);
+    });
+
+    // ---- Render loop ----
+    let frameId = 0;
+    function animate() {
+      frameId = requestAnimationFrame(animate);
+      controls.update();
+      spark.render(scene, camera);
+    }
+    animate();
+
+    // ---- Resize ----
+    function handleResize() {
+      const w = container!.clientWidth;
+      const h = container!.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+    window.addEventListener("resize", handleResize);
+
+    // ---- Pointer interaction: select, drag-to-move, hover cursor ----
+    const raycaster = new THREE.Raycaster();
+    const pointerNdc = new THREE.Vector2();
+    let isDragging = false;
+
+    function updatePointerNdc(event: PointerEvent) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointerNdc.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointerNdc.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    }
+
+    function furnitureGroups(): THREE.Object3D[] {
+      return Array.from(furnitureObjects.values());
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      updatePointerNdc(event);
+      raycaster.setFromCamera(pointerNdc, camera);
+      raycaster.layers.set(FURNITURE_LAYER);
+      const hits = raycaster.intersectObjects(furnitureGroups(), true);
+      if (hits.length > 0) {
+        let hitGroup: THREE.Object3D | null = hits[0].object;
+        while (hitGroup && !furnitureObjects.has(hitGroup.userData.url)) {
+          hitGroup = hitGroup.parent;
+        }
+        const url = hitGroup?.userData.url ?? null;
+        setSelectedUrl(url);
+        isDragging = true;
+        controls.enabled = false;
+        renderer.domElement.style.cursor = "grabbing";
+      } else {
+        setSelectedUrl(null);
+      }
+    }
+
+    function handlePointerMove(event: PointerEvent) {
+      updatePointerNdc(event);
+
+      if (isDragging) {
+        const url = selectedUrlRef.current;
+        const group = url ? furnitureObjects.get(url) : null;
+        if (group && roomCollider) {
+          raycaster.setFromCamera(pointerNdc, camera);
+          raycaster.layers.set(COLLIDER_LAYER);
+          const hits = raycaster.intersectObjects(roomCollider.children, true);
+          if (hits.length > 0) {
+            const point = hits[0].point;
+            group.position.lerp(point, DRAG_LERP);
+          }
+        }
+        renderer.domElement.style.cursor = "grabbing";
+        return;
+      }
+
+      raycaster.setFromCamera(pointerNdc, camera);
+      raycaster.layers.set(FURNITURE_LAYER);
+      const hits = raycaster.intersectObjects(furnitureGroups(), true);
+      renderer.domElement.style.cursor = hits.length > 0 ? "grab" : "default";
+    }
+
+    function handlePointerUp() {
+      isDragging = false;
+      controls.enabled = true;
+      renderer.domElement.style.cursor = "default";
+    }
+
+    const canvas = renderer.domElement;
+    canvas.addEventListener("pointerdown", handlePointerDown);
+    canvas.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    // ---- Keyboard: Q/E rotate the selected piece ----
+    function handleKeyDown(event: KeyboardEvent) {
+      const url = selectedUrlRef.current;
+      if (!url) return;
+      const group = furnitureObjects.get(url);
+      if (!group) return;
+      if (event.key === "q" || event.key === "Q") {
+        group.rotation.y -= ROTATE_STEP;
+      } else if (event.key === "e" || event.key === "E") {
+        group.rotation.y += ROTATE_STEP;
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Stash the syncer so the placedItems-effect (below) can reach into this scene.
+    sceneApiRef.current = { syncFurniture };
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("keydown", handleKeyDown);
+      canvas.removeEventListener("pointerdown", handlePointerDown);
+      canvas.removeEventListener("pointermove", handlePointerMove);
+
+      sceneApiRef.current = null;
+      controls.dispose();
+      splatMesh.dispose();
+      renderer.dispose();
+      if (renderer.domElement.parentNode === container) {
+        container.removeChild(renderer.domElement);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spzUrl, meshUrl]);
+
+  useEffect(() => {
+    sceneApiRef.current?.syncFurniture(placedItems);
+  }, [placedItems]);
+
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
+
+      {/* Furniture sidebar — right edge */}
       <div
         style={{
           position: "absolute",
@@ -183,61 +314,35 @@ export default function MeshViewer({ url }: { url: string }) {
           flexDirection: "column",
           gap: 8,
           padding: 10,
-          borderRadius: "0 12px 12px 0",
         }}
       >
         <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, textAlign: "center" }}>Furniture</span>
-        {FURNITURE_ITEMS.map((item) => {
-          const isPlaced = placedItems.includes(item.url);
-          return (
-            <button
-              key={item.id}
-              onClick={() => toggleItem(item.url)}
-              style={{
-                position: "relative",
-                width: "100%",
-                background: "rgba(255,255,255,0.08)",
-                border: isPlaced ? "1px solid #4A90E2" : "1px solid rgba(255,255,255,0.15)",
-                borderRadius: 8,
-                padding: 8,
-                cursor: "pointer",
-                color: "white",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
-              {isPlaced && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: 4,
-                    right: 4,
-                    width: 14,
-                    height: 14,
-                    borderRadius: "50%",
-                    background: "#4A90E2",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Check size={9} color="white" />
-                </span>
-              )}
-              <img
-                src={item.thumb}
-                alt={item.label}
-                style={{ width: "100%", height: 80, objectFit: "cover", borderRadius: 6 }}
-              />
-              <span style={{ fontSize: 11, textAlign: "center", color: "white" }}>{item.label}</span>
-            </button>
-          );
-        })}
+        {FURNITURE_ITEMS.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => toggleItem(item.url)}
+            style={{
+              width: "100%",
+              background: "rgba(255,255,255,0.08)",
+              border: placedItems.includes(item.url) ? "1px solid #4A90E2" : "1px solid rgba(255,255,255,0.15)",
+              borderRadius: 8,
+              padding: 8,
+              cursor: "pointer",
+              color: "white",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            <img src={item.thumb} alt={item.label} style={{ width: "100%", height: 70, objectFit: "cover", borderRadius: 6 }} />
+            <span style={{ fontSize: 11 }}>{item.label}</span>
+          </button>
+        ))}
       </div>
 
-      {selectedId !== null && (
+      {/* Rotation hint */}
+      {selectedUrl && (
         <div
           style={{
             position: "absolute",
@@ -247,12 +352,12 @@ export default function MeshViewer({ url }: { url: string }) {
             background: "rgba(0,0,0,0.55)",
             color: "white",
             borderRadius: 8,
-            padding: "8px 10px",
+            padding: "6px 12px",
             fontSize: 12,
             whiteSpace: "nowrap",
           }}
         >
-          [Q] ↺ &nbsp; [E] ↻
+          [Q] ↺ &nbsp; [E] ↻ to rotate
         </div>
       )}
     </div>

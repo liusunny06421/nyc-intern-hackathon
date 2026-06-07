@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Box, Info, ExternalLink } from "lucide-react";
 import Image from "next/image";
+import { DEMO_WORLD } from "@/lib/demo-world";
 
 // WebGL viewer is client-only (no SSR)
 const MeshViewer = dynamic(() => import("@/components/MeshViewer"), { ssr: false });
@@ -37,7 +38,7 @@ export default function RoomViewer({ sceneUrl, meshUrl, thumbnailUrl, photos, ge
           )}
 
           {has3D ? (
-            <MeshViewer url={meshUrl!} />
+            <MeshViewer spzUrl={DEMO_WORLD.spzUrl!} meshUrl={meshUrl!} />
           ) : thumbnailUrl && !generating ? (
             <Image src={thumbnailUrl} alt="Room thumbnail" fill className="object-cover" />
           ) : photos[0] ? (

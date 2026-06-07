@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import InspirationPanel from "@/components/InspirationPanel";
 import ShoppingPanel from "@/components/ShoppingPanel";
+import { DEMO_WORLD } from "@/lib/demo-world";
 
 const MeshViewer = dynamic(() => import("@/components/MeshViewer"), { ssr: false });
 
@@ -157,7 +158,7 @@ export default function RoomGenerator() {
           <TabsContent value="3d">
             <div className="relative w-full aspect-video rounded-xl border border-border bg-card overflow-hidden">
               {world.meshUrl ? (
-                <MeshViewer url={world.meshUrl} />
+                <MeshViewer spzUrl={DEMO_WORLD.spzUrl!} meshUrl={world.meshUrl} />
               ) : world.thumbnailUrl ? (
                 <Image src={world.thumbnailUrl} alt="Generated world" fill className="object-cover" />
               ) : null}

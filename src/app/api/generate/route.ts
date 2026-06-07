@@ -5,6 +5,8 @@ import { getCachedRoom, setCachedRoom } from "@/lib/rooms-cache";
 // Starts World Labs world generation and returns immediately with an operationId.
 // World generation takes minutes, so the client polls /api/generate/status.
 export async function POST(req: NextRequest) {
+  return NextResponse.json({ error: "API disabled for demo" }, { status: 503 });
+
   const contentType = req.headers.get("content-type") ?? "";
 
   // User-uploaded photo (FakeWorldGenerator dropzone): upload as a media asset, then generate.
