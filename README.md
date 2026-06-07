@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DormDesign
 
-## Getting Started
+**See your dorm room in 3D before move-in day — then fill it with furniture that actually fits.**
 
-First, run the development server:
+Type in your building and room number and DormDesign renders a true-to-life,
+navigable 3D model of your actual space — real dimensions, real windows, real
+corners. Style it to a vibe you love, then shop real products from IKEA and
+Target, filtered to only what physically fits.
+
+> Now live for Columbia's Broadway dorms.
+
+## What you can do
+
+- **Find your room** — Pick your building and room number. Broadway Hall has real
+  floor plans and live 3D wired up today.
+- **Walk it in 3D** — A model generated from real floor plans and photos, accurate
+  to the centimeter. Rotate it, walk it, tap any object to swap or measure it.
+- **Style with the agent** — Drop in a few inspiration pics or pick a vibe; the
+  agent turns them into design directions and restyles your room to match.
+- **Shop what fits** — Real IKEA and Target products, filtered against your room's
+  true dimensions. No measuring tape, no returns.
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Want to skip the setup and just look around? The fastest path:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/` — the landing page
+- `/onboarding` — the find-your-room flow
+- `/room/B1207` — a fully baked demo room you can tour right now
 
-## Learn More
+## Configuration
 
-To learn more about Next.js, take a look at the following resources:
+3D worlds are generated through the [World Labs Marble API](https://docs.worldlabs.ai/api).
+To generate new rooms, add a key to `.env.local`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+WORLDLABS_API_KEY=your_key_here
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Without a key, the baked demo room (`/room/B1207`) still works end to end.
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Start the dev server |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
+| `npm run lint` | Lint the codebase |
+| `npm run scrape:broadway` | Refresh Broadway room/floor-plan data |
+| `npm run scrape:floorplans` | Download floor-plan images |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Built with
+
+Next.js 16 · React 19 · Three.js (React Three Fiber) · Tailwind CSS · Zustand ·
+World Labs Marble
