@@ -1,20 +1,25 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito, Fredoka } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const nunito = Nunito({
+  variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const fredoka = Fredoka({
+  variable: "--font-display",
   subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "DormDesign — Visualize & Furnish Your Dorm",
-  description: "See your actual dorm room in 3D before you move in. AI furniture recommendations that fit.",
+  title: "DormDesign — See it. Style it. Live it.",
+  description:
+    "Enter your dorm room number and instantly explore a navigable 3D rendering of your actual room. Pull in inspiration, see furniture that physically fits, and shop real products from IKEA and Target.",
 };
 
 export default function RootLayout({
@@ -23,8 +28,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} dark`}>
-      <body className="antialiased min-h-screen bg-background text-foreground">{children}</body>
+    <html
+      lang="en"
+      className={`${nunito.variable} ${fredoka.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col bg-paper text-ink font-sans selection:bg-blue/20 selection:text-navy">
+        <div className="grain" aria-hidden="true" />
+        {children}
+      </body>
     </html>
   );
 }
