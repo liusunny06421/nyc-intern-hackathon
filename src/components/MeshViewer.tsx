@@ -3,7 +3,7 @@
 import { Suspense, useLayoutEffect, useRef, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Environment, Html } from "@react-three/drei";
-import { Box, Check, Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import FurniturePiece from "./FurniturePiece";
@@ -12,9 +12,9 @@ import FurniturePiece from "./FurniturePiece";
 const MESH_ROTATION: [number, number, number] = [Math.PI, 0, 0];
 
 const FURNITURE_ITEMS = [
-  { id: "piece-1", label: "Piece 1", url: "/reference/demo/3cb5b679bb8e21c509cbdd1de8e0b6ab.glb" },
-  { id: "piece-2", label: "Piece 2", url: "/reference/demo/7dc3f5ae8434c9bb772bc49ee85e8f1e.glb" },
-  { id: "piece-3", label: "Piece 3", url: "/reference/demo/c52142f240988296e6994010bd010586.glb" },
+  { id: "mirror", label: "Mirror", url: "/reference/demo/3cb5b679bb8e21c509cbdd1de8e0b6ab.glb", thumb: "/reference/demo/mirror.webp" },
+  { id: "lamp", label: "Lamp", url: "/reference/demo/7dc3f5ae8434c9bb772bc49ee85e8f1e.glb", thumb: "/reference/demo/lamp.jpg" },
+  { id: "organizer", label: "Organizer", url: "/reference/demo/c52142f240988296e6994010bd010586.glb", thumb: "/reference/demo/organizer.jpg" },
 ];
 
 function Model({
@@ -226,8 +226,12 @@ export default function MeshViewer({ url }: { url: string }) {
                   <Check size={9} color="white" />
                 </span>
               )}
-              <Box size={20} />
-              <span style={{ fontSize: 11, textAlign: "center" }}>{item.label}</span>
+              <img
+                src={item.thumb}
+                alt={item.label}
+                style={{ width: "100%", height: 80, objectFit: "cover", borderRadius: 6 }}
+              />
+              <span style={{ fontSize: 11, textAlign: "center", color: "white" }}>{item.label}</span>
             </button>
           );
         })}

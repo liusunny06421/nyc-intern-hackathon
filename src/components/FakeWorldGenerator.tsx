@@ -29,7 +29,7 @@ interface Props {
 }
 
 export default function FakeWorldGenerator({ roomNumber, dimensions, floorPlanUrl, photos = [] }: Props) {
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [phase, setPhase] = useState<Phase>("done");
   const [preview, setPreview] = useState<string | null>(null);
   const [stepIdx, setStepIdx] = useState(0);
   const [pct, setPct] = useState(0);
