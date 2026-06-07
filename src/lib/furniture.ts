@@ -1,7 +1,7 @@
 export interface FurnitureItem {
   id: string;
   name: string;
-  retailer: "ikea" | "target" | "wayfair";
+  retailer: "ikea" | "target" | "wayfair" | "amazon" | "other";
   price: number;
   imageUrl: string;
   productUrl: string;

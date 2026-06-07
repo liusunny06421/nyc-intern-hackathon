@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { ExternalLink, ShoppingCart, Ruler, Filter } from "lucide-react";
+import { ExternalLink, ShoppingCart, Ruler, Filter, Sparkles } from "lucide-react";
 import Image from "next/image";
 import type { FurnitureItem } from "@/lib/furniture";
 
 interface Props {
   dimensions?: { width: number; length: number; height: number };
   roomNumber: string;
+  styles?: string[];
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -25,22 +26,30 @@ const CATEGORY_LABELS: Record<string, string> = {
   shelf: "Shelves",
 };
 
-export default function ShoppingPanel({ dimensions, roomNumber }: Props) {
+export default function ShoppingPanel({ dimensions, roomNumber, styles }: Props) {
   const [items, setItems] = useState<FurnitureItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("all");
+  const [source, setSource] = useState<"ai" | "static" | null>(null);
+
+  const styleKey = (styles ?? []).join(",");
 
   useEffect(() => {
     if (!dimensions) { setLoading(false); return; }
+    setLoading(true);
     fetch("/api/furniture", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ width: dimensions.width, length: dimensions.length }),
+      body: JSON.stringify({
+        width: dimensions.width,
+        length: dimensions.length,
+        styles: styleKey ? styleKey.split(",") : [],
+      }),
     })
       .then((r) => r.json())
-      .then((data) => { setItems(data.items ?? []); setLoading(false); })
+      .then((data) => { setItems(data.items ?? []); setSource(data.source ?? null); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [dimensions]);
+  }, [dimensions, styleKey]);
 
   const filtered = category === "all" ? items : items.filter((i) => i.category === category);
   const categories = ["all", ...Array.from(new Set(items.map((i) => i.category)))];
@@ -49,11 +58,20 @@ export default function ShoppingPanel({ dimensions, roomNumber }: Props) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div>
-          <h2 className="text-lg font-semibold">Furniture That Fits</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">Furniture That Fits</h2>
+            {source === "ai" && !loading && (
+              <Badge variant="secondary" className="gap-1 text-xs" style={{ color: "var(--color-grass)" }}>
+                <Sparkles className="h-3 w-3" /> Live from the web
+              </Badge>
+            )}
+          </div>
           {dimensions && (
             <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
               <Ruler className="h-3.5 w-3.5" />
-              All items sized for your {dimensions.width}′ × {dimensions.length}′ room
+              {loading
+                ? "Searching the web for real furniture that fits your room…"
+                : `All items sized for your ${dimensions.width}′ × ${dimensions.length}′ room`}
             </p>
           )}
         </div>
@@ -117,6 +135,8 @@ function FurnitureCard({ item }: { item: FurnitureItem }) {
     ikea:    { bg: "oklch(0.54 0.11 210 / 0.12)", color: "var(--color-teal)",     border: "oklch(0.54 0.11 210 / 0.25)" },
     target:  { bg: "oklch(0.40 0.14 15 / 0.12)",  color: "var(--color-burgundy)", border: "oklch(0.40 0.14 15 / 0.25)" },
     wayfair: { bg: "oklch(0.52 0.07 145 / 0.12)", color: "var(--color-sage)",     border: "oklch(0.52 0.07 145 / 0.25)" },
+    amazon:  { bg: "oklch(0.74 0.15 85 / 0.14)",  color: "var(--color-marigold)", border: "oklch(0.74 0.15 85 / 0.28)" },
+    other:   { bg: "color-mix(in srgb, var(--color-navy) 8%, transparent)", color: "var(--color-navy)", border: "color-mix(in srgb, var(--color-navy) 18%, transparent)" },
   };
 
   return (
