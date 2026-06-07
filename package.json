@@ -11,6 +11,7 @@
     "scrape:floorplans": "node scripts/download-floorplans.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.102.0",
     "@base-ui/react": "^1.5.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
