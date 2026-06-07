@@ -34,7 +34,8 @@ await page.evaluate(() => {
 });
 
 // give it time to load the (large) glb
-await new Promise((r) => setTimeout(r, 60000));
+await new Promise((r) => setTimeout(r, 50000));
 
-console.log("--- done waiting ---");
+await page.screenshot({ path: "/tmp/mirror-after-click.png" });
+console.log("--- screenshot saved ---");
 await browser.close();

@@ -14,7 +14,8 @@ const FURNITURE_ITEMS = [
 
 const FURNITURE_LAYER = 0;
 const COLLIDER_LAYER = 1;
-const DRAG_LERP = 0.12;
+const MOVE_STEP = 0.05;
+const FLOOR_LIFT = 0.3; // compensates for collider-floor estimate sitting below the visible floor
 const ROTATE_STEP = Math.PI / 12;
 
 export default function MeshViewer({ spzUrl, meshUrl }: { spzUrl: string; meshUrl: string }) {
@@ -54,7 +55,7 @@ export default function MeshViewer({ spzUrl, meshUrl }: { spzUrl: string; meshUr
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(62, container.clientWidth / container.clientHeight, 0.01, 1000);
-    camera.position.set(0, 1.2, 4);
+    camera.position.set(0, -1.2, 4);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -76,6 +77,7 @@ export default function MeshViewer({ spzUrl, meshUrl }: { spzUrl: string; meshUr
 
     // Invisible collider mesh — used only for raycasting so furniture can snap to the floor.
     let roomCollider: THREE.Group | null = null;
+    let roomBox: THREE.Box3 | null = null;
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.9);
     const keyLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -91,7 +93,20 @@ export default function MeshViewer({ spzUrl, meshUrl }: { spzUrl: string; meshUr
       if (!roomCollider) return new THREE.Vector3();
       const box = new THREE.Box3().setFromObject(roomCollider);
       const center = box.getCenter(new THREE.Vector3());
-      return new THREE.Vector3(center.x, box.max.y, center.z);
+
+      // The reconstructed collider mesh often extends below the visible floor
+      // (capture noise / surrounding structure), so box.min.y sits too low.
+      // Cast upward from below the mesh through the room's center and use the
+      // lowest surface actually hit — that's the real floor.
+      const upRay = new THREE.Raycaster(
+        new THREE.Vector3(center.x, box.min.y - 1, center.z),
+        new THREE.Vector3(0, 1, 0)
+      );
+      upRay.layers.set(COLLIDER_LAYER);
+      const hits = upRay.intersectObject(roomCollider, true);
+      const floorY = hits.length > 0 ? Math.min(...hits.map((h) => h.point.y)) : box.min.y;
+
+      return new THREE.Vector3(center.x, floorY, center.z);
     }
 
     function loadFurniture(url: string) {
@@ -101,8 +116,16 @@ export default function MeshViewer({ spzUrl, meshUrl }: { spzUrl: string; meshUr
         group.userData.url = url;
         group.layers.set(FURNITURE_LAYER);
         group.traverse((child) => child.layers.set(FURNITURE_LAYER));
+
+        // Offset by the model's own bounding box so its bottom — not its
+        // pivot — rests on the floor.
+        const box = new THREE.Box3().setFromObject(group);
+        const bottomOffset = box.min.y;
+
         const floorCenter = colliderFloorCenter();
         group.position.copy(floorCenter);
+        group.position.y = floorCenter.y - bottomOffset + FLOOR_LIFT;
+        group.userData.floorY = group.position.y;
         scene.add(group);
         furnitureObjects.set(url, group);
       });
@@ -137,6 +160,7 @@ export default function MeshViewer({ spzUrl, meshUrl }: { spzUrl: string; meshUr
       roomCollider = group;
 
       const box = new THREE.Box3().setFromObject(group);
+      roomBox = box;
       const size = box.getSize(new THREE.Vector3());
       const center = box.getCenter(new THREE.Vector3());
 
@@ -161,6 +185,7 @@ export default function MeshViewer({ spzUrl, meshUrl }: { spzUrl: string; meshUr
 
       controls.target.copy(target);
       controls.update();
+      camera.position.y = Math.abs(camera.position.y);
 
       // Now that the floor exists, place any furniture queued before the collider loaded.
       syncFurniture(placedItemsRef.current);
@@ -185,10 +210,9 @@ export default function MeshViewer({ spzUrl, meshUrl }: { spzUrl: string; meshUr
     }
     window.addEventListener("resize", handleResize);
 
-    // ---- Pointer interaction: select, drag-to-move, hover cursor ----
+    // ---- Pointer interaction: click to select, hover cursor ----
     const raycaster = new THREE.Raycaster();
     const pointerNdc = new THREE.Vector2();
-    let isDragging = false;
 
     function updatePointerNdc(event: PointerEvent) {
       const rect = renderer.domElement.getBoundingClientRect();
@@ -210,11 +234,7 @@ export default function MeshViewer({ spzUrl, meshUrl }: { spzUrl: string; meshUr
         while (hitGroup && !furnitureObjects.has(hitGroup.userData.url)) {
           hitGroup = hitGroup.parent;
         }
-        const url = hitGroup?.userData.url ?? null;
-        setSelectedUrl(url);
-        isDragging = true;
-        controls.enabled = false;
-        renderer.domElement.style.cursor = "grabbing";
+        setSelectedUrl(hitGroup?.userData.url ?? null);
       } else {
         setSelectedUrl(null);
       }
@@ -222,50 +242,62 @@ export default function MeshViewer({ spzUrl, meshUrl }: { spzUrl: string; meshUr
 
     function handlePointerMove(event: PointerEvent) {
       updatePointerNdc(event);
-
-      if (isDragging) {
-        const url = selectedUrlRef.current;
-        const group = url ? furnitureObjects.get(url) : null;
-        if (group && roomCollider) {
-          raycaster.setFromCamera(pointerNdc, camera);
-          raycaster.layers.set(COLLIDER_LAYER);
-          const hits = raycaster.intersectObjects(roomCollider.children, true);
-          if (hits.length > 0) {
-            const point = hits[0].point;
-            group.position.lerp(point, DRAG_LERP);
-          }
-        }
-        renderer.domElement.style.cursor = "grabbing";
-        return;
-      }
-
       raycaster.setFromCamera(pointerNdc, camera);
       raycaster.layers.set(FURNITURE_LAYER);
       const hits = raycaster.intersectObjects(furnitureGroups(), true);
-      renderer.domElement.style.cursor = hits.length > 0 ? "grab" : "default";
-    }
-
-    function handlePointerUp() {
-      isDragging = false;
-      controls.enabled = true;
-      renderer.domElement.style.cursor = "default";
+      renderer.domElement.style.cursor = hits.length > 0 ? "pointer" : "default";
     }
 
     const canvas = renderer.domElement;
     canvas.addEventListener("pointerdown", handlePointerDown);
     canvas.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
 
-    // ---- Keyboard: Q/E rotate the selected piece ----
+    // ---- Keyboard: arrows move, Q/E rotate the selected piece ----
     function handleKeyDown(event: KeyboardEvent) {
       const url = selectedUrlRef.current;
       if (!url) return;
       const group = furnitureObjects.get(url);
       if (!group) return;
-      if (event.key === "q" || event.key === "Q") {
-        group.rotation.y -= ROTATE_STEP;
-      } else if (event.key === "e" || event.key === "E") {
-        group.rotation.y += ROTATE_STEP;
+
+      switch (event.key) {
+        case "q":
+        case "Q":
+          group.rotation.y -= ROTATE_STEP;
+          return;
+        case "e":
+        case "E":
+          group.rotation.y += ROTATE_STEP;
+          return;
+        case "w":
+        case "W":
+          group.position.y += MOVE_STEP;
+          group.userData.floorY = group.position.y;
+          return;
+        case "s":
+        case "S":
+          group.position.y -= MOVE_STEP;
+          group.userData.floorY = group.position.y;
+          return;
+        case "ArrowUp":
+          group.position.z -= MOVE_STEP;
+          break;
+        case "ArrowDown":
+          group.position.z += MOVE_STEP;
+          break;
+        case "ArrowLeft":
+          group.position.x -= MOVE_STEP;
+          break;
+        case "ArrowRight":
+          group.position.x += MOVE_STEP;
+          break;
+        default:
+          return;
+      }
+
+      event.preventDefault();
+      if (roomBox) {
+        group.position.x = THREE.MathUtils.clamp(group.position.x, roomBox.min.x, roomBox.max.x);
+        group.position.z = THREE.MathUtils.clamp(group.position.z, roomBox.min.z, roomBox.max.z);
       }
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -276,7 +308,6 @@ export default function MeshViewer({ spzUrl, meshUrl }: { spzUrl: string; meshUr
     return () => {
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", handleResize);
-      window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("keydown", handleKeyDown);
       canvas.removeEventListener("pointerdown", handlePointerDown);
       canvas.removeEventListener("pointermove", handlePointerMove);
@@ -357,7 +388,7 @@ export default function MeshViewer({ spzUrl, meshUrl }: { spzUrl: string; meshUr
             whiteSpace: "nowrap",
           }}
         >
-          [Q] ↺ &nbsp; [E] ↻ to rotate
+          [↑↓←→] move &nbsp; [W/S] up/down &nbsp; [Q] ↺ &nbsp; [E] ↻ rotate
         </div>
       )}
     </div>
