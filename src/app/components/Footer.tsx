@@ -63,7 +63,7 @@ export default function Footer() {
             </div>
 
             <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-navy/10 pt-6 sm:flex-row sm:items-center">
-              <p className="text-xs text-ink-faint">© 2026 DormDesign. Made for move-in day.</p>
+              <p className="text-xs text-ink-faint">© 2026 The Shaft. Made for move-in day.</p>
               <span className="inline-flex items-center gap-2 rounded-full bg-paper-2 px-3 py-1.5 text-xs font-medium text-ink-soft">
                 <Smiley className="h-4 w-4 text-blue" /> Built at the NYC Intern Hackathon
               </span>
